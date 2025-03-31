@@ -189,7 +189,7 @@ class StockEnv(gym.Env):
         
         # Final reward
         reward = portfolio_return - self.penalty_weight*(transaction_costs + taxes +max_drawdown) #- opportunity_cost
-        reward /= 1000 # Normalize reward 
+        reward /= 1000 # Normalize reward (%)
         
         # Update portfolio value
         self.portfolio_value = new_portfolio_value

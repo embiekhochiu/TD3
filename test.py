@@ -33,6 +33,7 @@ test_rewards = []
 for episode in range(num_test_episodes):
     state = test_env.reset()  
     done = False
+    total_reward = 0
 
     for step in range(max_steps):
         chaotic_features = all_chaotic_features[:, step, :].flatten()  
