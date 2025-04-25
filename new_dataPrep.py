@@ -70,7 +70,8 @@ def align_and_combine_data(ticker_data, save_path=None):
 
 def main():
     # Define tickers
-    tickers = ['AAPL', 'MA', 'CSCO', 'MSFT', 'AMZN', 'GOOG', 'IBM']
+    # tickers = ['AAPL', 'MA', 'CSCO', 'MSFT', 'AMZN', 'GOOG', 'IBM']
+    tickers = ['FSLR','ENPH','SEDG','CSIQ']
     
     # Create data directory
     data_dir = "data"
@@ -81,7 +82,7 @@ def main():
     ticker_data = fetch_data(tickers, "2018-01-01", "2024-01-01")
     ticker_data = add_technical_indicators(ticker_data)
     ticker_data = clean_and_save_data(ticker_data, data_dir)
-    train_data = align_and_combine_data(ticker_data, f"{data_dir}/train_processed_data.npy")
+    train_data = align_and_combine_data(ticker_data, f"{data_dir}/train_processed_data2.npy")
     print(f"Training data shape: {train_data.shape}")
     
     # Process test data
@@ -89,7 +90,7 @@ def main():
     ticker_data_test = fetch_data(tickers, "2024-01-01", "2025-01-01")
     ticker_data_test = add_technical_indicators(ticker_data_test)
     ticker_data_test = clean_and_save_data(ticker_data_test, data_dir)
-    test_data = align_and_combine_data(ticker_data_test, f"{data_dir}/test_processed_data.npy")
+    test_data = align_and_combine_data(ticker_data_test, f"{data_dir}/test_processed_data2.npy")
     print(f"Test data shape: {test_data.shape}")
 
 if __name__ == "__main__":

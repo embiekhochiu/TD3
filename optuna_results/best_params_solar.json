@@ -1,0 +1,11 @@
+{
+  "hidden_size": 384,
+  "num_layers": 3,
+  "batch_size": 64,
+  "discount": 0.995,
+  "tau": 0.0015770836890900528,
+  "exploration_phase": 500,
+  "observation_covariance": 0.19389816073307287,
+  "transition_covariance": 0.02962301274271551,
+  "num_episodes": 1100
+}

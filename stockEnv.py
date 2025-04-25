@@ -7,7 +7,7 @@ class StockEnv(gym.Env):
         self,
         num_stocks,
         data,
-        lookback_window=5,  # Number of past days to include
+        lookback_window=15,  # Number of past days to include
         initial_cash=100_000,
         transaction_cost=0.001,
         tax_rate=0.001,
@@ -152,6 +152,7 @@ class StockEnv(gym.Env):
                 trade_value = self.cash_balance * allocation
                 num_shares = trade_value // current_prices[i]
                 trade_volume = num_shares * current_prices[i]
+            
                 
                 # Calculate costs
                 transaction_costs += trade_volume * self.transaction_cost
@@ -185,7 +186,7 @@ class StockEnv(gym.Env):
         )
 
         self.portfolio_history.append(new_portfolio_value)  # Store portfolio value history
-        max_drawdown = self._calculate_max_drawdown()
+        # max_drawdown = self._calculate_max_drawdown()
 
         # Portfolio return
         portfolio_return = new_portfolio_value - old_portfolio_value
@@ -196,7 +197,7 @@ class StockEnv(gym.Env):
         # print(f"Portfolio value after: {new_portfolio_value}")    
         
         # Final reward
-        reward = portfolio_return - self.penalty_weight*(transaction_costs + taxes +max_drawdown) #- opportunity_cost
+        reward = portfolio_return - self.penalty_weight*(transaction_costs + taxes) #- opportunity_cost
         reward /= 1000 # Normalize reward (%)
         
         # Update portfolio value

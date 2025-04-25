@@ -95,7 +95,7 @@ class ReplayBuffer:
 # TD3 Algorithm
 class TD3:
     def __init__(self, state_dim, chaotic_feature_dim, action_dim, hidden_size, num_layers, num_stocks, max_action, env_action_space_high, env_action_space_low):
-        self.exploration_phase = 600  # Number of episodes for chaotic exploration
+        self.exploration_phase = 200  # Number of episodes for chaotic exploration
         self.actor = Actor(state_dim, chaotic_feature_dim, hidden_size, num_layers, num_stocks)
         self.actor_target = Actor(state_dim, chaotic_feature_dim, hidden_size, num_layers, num_stocks)
         self.actor_target.load_state_dict(self.actor.state_dict())
@@ -138,14 +138,14 @@ class TD3:
 
         # Add chaotic noise during exploration phase
         if current_episode < self.exploration_phase:
-            chaotic = np.array([self.chaotic_noise(scale=0.01) for _ in range(actions.shape[0])])
+            # chaotic = np.array([self.chaotic_noise(scale=0.01) for _ in range(actions.shape[0])])
             gaussian_noise = np.random.normal(0, 0.1, size=actions.shape)  # More variance
-            actions = np.clip(actions + chaotic + gaussian_noise, self.env_action_space_low, self.env_action_space_high)
+            actions = np.clip(actions + gaussian_noise, self.env_action_space_low, self.env_action_space_high)
 
         # Clip actions to valid range
         return np.clip(actions, self.env_action_space_low, self.env_action_space_high)
 
-    def train(self, batch_size=64, discount=0.99, tau=1e-3):
+    def train(self, batch_size=64,discount=0.99, tau=1e-3):
         if len(self.replay_buffer.buffer) < batch_size:
             return 0.0, 0.0
 
