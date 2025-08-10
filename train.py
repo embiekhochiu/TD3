@@ -7,20 +7,22 @@ from TD3 import TD3
 from OptiPhaseSpace import ChaoticFeatureExtractor
 from kalmanfilter import apply_kalman_filter
 
-data = np.load("TD3/data/data/train_processed_data2.npy")
+data = np.load("TD3/data/train_processed_data.npy")
 
 # Training configuration
 
 num_stocks = data.shape[1]
 initial_cash = 100_000
-num_episodes = 500
+num_episodes = 150
 max_steps = data.shape[0]
-batch_size = 64
-# discount = 0.99
-discount = 0.995
-# tau = 1e-3
-tau = 0.0015770836890900528
-exploration_phase = 200
+batch_size = 32
+# batch_size = 32
+discount = 0.95
+# discount = 0.985
+tau = 1e-3
+# tau = 0.0008781377399964417
+exploration_phase = 50
+# exploration_phase = 260
 lookback_window = 15  # Define the lookback window
 
 
@@ -30,8 +32,8 @@ all_chaotic_features = chaotic_extractor.extract_features(data)  # Extract chaot
 chaotic_feature_dim = chaotic_extractor.output_dim * num_stocks
 
 # Kalman filter setup
-# data = apply_kalman_filter(data,observation_covariance=1.0,transition_covariance=0.1)
-data = apply_kalman_filter(data, observation_covariance=1.6848619905630025, transition_covariance=0.024592217008838894)
+data = apply_kalman_filter(data,observation_covariance=1.0,transition_covariance=0.1)
+# data = apply_kalman_filter(data, observation_covariance=0.31875743338264945, transition_covariance=0.011650695632348223)
 
 # Environment setup
 env = StockEnv(num_stocks=num_stocks, data=data, initial_cash=initial_cash)
@@ -40,28 +42,28 @@ action_dim = env.action_space.shape[0]
 
 # TD3 Agent setup
 max_action = 1.0
-# agent = TD3(
-#     state_dim=num_stocks * (data.shape[-1]),  # Size of features per timestep
-#     chaotic_feature_dim=chaotic_feature_dim, # Size of chaotic features per timestep
-#     action_dim=action_dim,
-#     hidden_size=256,
-#     num_layers=2,
-#     num_stocks=num_stocks,
-#     max_action=1.0,
-#     env_action_space_high=1.0,
-#     env_action_space_low=0.0
-# )
 agent = TD3(
     state_dim=num_stocks * (data.shape[-1]),  # Size of features per timestep
     chaotic_feature_dim=chaotic_feature_dim, # Size of chaotic features per timestep
     action_dim=action_dim,
-    hidden_size=384,
-    num_layers=3,
+    hidden_size=256,
+    num_layers=2,
     num_stocks=num_stocks,
     max_action=1.0,
     env_action_space_high=1.0,
     env_action_space_low=0.0
 )
+# agent = TD3(
+#     state_dim=num_stocks * (data.shape[-1]),  # Size of features per timestep
+#     chaotic_feature_dim=chaotic_feature_dim, # Size of chaotic features per timestep
+#     action_dim=action_dim,
+#     hidden_size=384,
+#     num_layers=3,
+#     num_stocks=num_stocks,
+#     max_action=1.0,
+#     env_action_space_high=1.0,
+#     env_action_space_low=0.0
+# )
 
 agent.exploration_phase = exploration_phase
 
@@ -139,7 +141,7 @@ plt.legend()
 plt.show()
 
 
-torch.save(agent, 'td3_no_chaotic.pth')
+torch.save(agent, './model/td3.pth')
 
 plt.figure(figsize=(10, 5))
 plt.plot(critic_loss_history, label="Critic Loss")

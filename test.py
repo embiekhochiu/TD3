@@ -7,11 +7,11 @@ from TD3 import TD3
 from OptiPhaseSpace import ChaoticFeatureExtractor
 from kalmanfilter import apply_kalman_filter
 
-data = np.load("TD3/data/data/test_processed_data2.npy")
+data = np.load("TD3/data/test_processed_data.npy")
 # data = data[:95]  # Limit to the first 1000 timesteps for testing
 
 # Load the trained agent
-agent = torch.load('td3.pth', weights_only=False)  
+agent = torch.load('./TD3/model/td3.pth', weights_only=False)  
 agent.exploration_phase = 0  # No exploration during testing
 
 # Define the lookback window (same as in training)
@@ -26,7 +26,7 @@ chaotic_feature_dim = chaotic_extractor.output_dim * data.shape[1]
 
 # Kalman filter setup
 # data = apply_kalman_filter(data, observation_covariance=1.0, transition_covariance=0.1)
-data = apply_kalman_filter(data, observation_covariance=0.19389816073307287, transition_covariance=	0.02962301274271551)
+# data = apply_kalman_filter(data, observation_covariance=0.19389816073307287, transition_covariance=	0.02962301274271551)
 
 # Environment setup
 test_env = StockEnv(num_stocks=num_stocks, data=data, initial_cash=100_000)
@@ -95,6 +95,36 @@ for episode in range(num_test_episodes):
 average_test_reward = np.mean(test_rewards)
 print(f"Average Test Reward: {average_test_reward:.7f}")
 
+def calculate_max_drawdown(portfolio_values):
+    peak = np.maximum.accumulate(portfolio_values)
+    drawdown = (portfolio_values - peak) / peak
+    max_drawdown = np.min(drawdown)
+    return abs(max_drawdown)
+
+def calculate_sharpe_ratio(portfolio_values, risk_free_rate=0.0):
+    returns = np.diff(portfolio_values) / portfolio_values[:-1]
+    excess_returns = returns - risk_free_rate
+    sharpe_ratio = np.mean(excess_returns) / (np.std(excess_returns) + 1e-8)  # Avoid division by zero
+    return sharpe_ratio
+
+# Log metrics for each episode
+max_drawdowns = []
+sharpe_ratios = []
+
+for i, values in enumerate(portfolio_values):
+    max_drawdown = calculate_max_drawdown(values)
+    sharpe_ratio = calculate_sharpe_ratio(values)
+    max_drawdowns.append(max_drawdown)
+    sharpe_ratios.append(sharpe_ratio)
+    print(f"Episode {i + 1} - Max Drawdown: {max_drawdown:.7f}, Sharpe Ratio: {sharpe_ratio:.7f}")
+
+# Compute average metrics across all episodes
+average_max_drawdown = np.mean(max_drawdowns)
+average_sharpe_ratio = np.mean(sharpe_ratios)
+
+print(f"Average Max Drawdown: {average_max_drawdown:.7f}")
+print(f"Average Sharpe Ratio: {average_sharpe_ratio:.7f}")
+
 # Plot test performance
 # plt.figure(figsize=(10, 5))
 # plt.plot(test_rewards, label="Total Reward")
@@ -105,17 +135,17 @@ print(f"Average Test Reward: {average_test_reward:.7f}")
 # plt.show()
 
 # Plot portfolio value over time for the best episode
-# best_episode = np.argmax(test_rewards)
-# plt.figure(figsize=(10, 5))
-# plt.plot(portfolio_values[best_episode], label=f"Episode {best_episode + 1}")
-# plt.xlabel("Trading Step")
-# plt.ylabel("Portfolio Value ($)")
-# plt.title("TD3 Test - Portfolio Value Over Time (Best Episode)")
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+best_episode = np.argmax(test_rewards)
+plt.figure(figsize=(10, 5))
+plt.plot(portfolio_values[best_episode], label=f"Episode {best_episode + 1}")
+plt.xlabel("Trading Step")
+plt.ylabel("Portfolio Value ($)")
+plt.title("TD3 Test - Portfolio Value Over Time")
+plt.legend()
+plt.grid(True)
+plt.show()
 
-# Plot portfolio value over time for all episodes
+# # Plot portfolio value over time for all episodes
 # plt.figure(figsize=(12, 6))
 # for i, values in enumerate(portfolio_values):
 #     plt.plot(values, label=f"Episode {i + 1}")

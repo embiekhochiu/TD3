@@ -12,7 +12,7 @@ from kalmanfilter import apply_kalman_filter
 
 def objective(trial):
     # Load data
-    data = np.load("TD3/data/train_processed_data.npy")
+    data = np.load("TD3/data/data/train_processed_data.npy")
     
     # Fixed parameters
     num_stocks = data.shape[1]
@@ -25,7 +25,7 @@ def objective(trial):
     batch_size = trial.suggest_categorical("batch_size", [32, 64, 128, 256])
     discount = trial.suggest_float("discount", 0.95, 0.995, step=0.005)
     tau = trial.suggest_float("tau", 5e-4, 5e-3, log=True)
-    exploration_phase = trial.suggest_int("exploration_phase", 100, 300, step=50)
+    exploration_phase = trial.suggest_int("exploration_phase", 100, 300, step=20)
     lookback_window = 15
     
     # Kalman filter parameters
@@ -168,7 +168,7 @@ def run_optimization(n_trials=30):
     # Create study name and results directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     study_name = f"td3_stock_trading_{timestamp}"
-    results_dir = "optuna_results"
+    results_dir = "TD3/optuna_results"
     os.makedirs(results_dir, exist_ok=True)
     
     # Create the study
@@ -391,7 +391,7 @@ def train_with_best_params(params):
 
 if __name__ == "__main__":
     # Number of trials to run
-    n_trials = 50
+    n_trials = 20
     
     # Run hyperparameter optimization
     best_params = run_optimization(n_trials=n_trials)

@@ -11,7 +11,9 @@ class StockEnv(gym.Env):
         initial_cash=100_000,
         transaction_cost=0.001,
         tax_rate=0.001,
-        penalty_weight=0.001,
+        penalty_weight=0.01,
+        reward_weight_1 = 0.05,
+        reward_weight_2 = 0.005
     ):
         super(StockEnv, self).__init__()
         
@@ -23,6 +25,8 @@ class StockEnv(gym.Env):
         self.transaction_cost = transaction_cost
         self.tax_rate = tax_rate
         self.penalty_weight = penalty_weight
+        self.reward_weight_1 = reward_weight_1
+        self.reward_weight_2 = reward_weight_2
 
         #Store historical portfolio values for MDD calculation
         self.portfolio_history = []
@@ -93,8 +97,8 @@ class StockEnv(gym.Env):
 
         # Define termination conditions
         bad_performance = (
-            self.portfolio_value < self.initial_cash * 0.7 or  # Portfolio down 30%
-            consecutive_losses >= 5 or  # 5 consecutive losing steps
+            self.portfolio_value < self.initial_cash * 0.6 or  # Portfolio down 30%
+            consecutive_losses >= 6 or  # 5 consecutive losing steps
             drawdown > 0.5  # More than 50% max drawdown 
             or reward < -3
         )
@@ -121,9 +125,13 @@ class StockEnv(gym.Env):
 
         features_flat = historical_data.flatten()
 
+        cummulative_return = (self.portfolio_value / self.initial_cash - 1) if self.initial_cash > 0 else 0
+
         # Construct observation: features + portfolio state
         obs = np.concatenate(
-            [features_flat, [self.cash_balance, self.portfolio_value], self.shares_held]
+            [features_flat, [self.cash_balance, self.portfolio_value],
+              self.shares_held,
+              [cummulative_return]]
         )
         return obs
 
@@ -187,19 +195,34 @@ class StockEnv(gym.Env):
 
         self.portfolio_history.append(new_portfolio_value)  # Store portfolio value history
         # max_drawdown = self._calculate_max_drawdown()
+        if old_portfolio_value <= 0:
+            portfolio_imme_return = 0.0
+        else:
+            portfolio_imme_return = ((new_portfolio_value - old_portfolio_value) / old_portfolio_value) * 100
+
+        if self.initial_cash <= 0:
+            cummu_return = 0.0
+        else:
+            cummu_return = ((new_portfolio_value - self.initial_cash) / self.initial_cash) * 100
+
+        # FIXED: cost penalty 
+        if new_portfolio_value <= 0:
+            cost_penalty = 0.0
+        else:
+            cost_penalty = ((transaction_costs + taxes) / new_portfolio_value) * 100
+
 
         # Portfolio return
-        portfolio_return = new_portfolio_value - old_portfolio_value
-        
-
-        # print(f"Shares held: {self.shares_held}")
-        # print(f"Portfolio value before: {old_portfolio_value}")
-        # print(f"Portfolio value after: {new_portfolio_value}")    
         
         # Final reward
-        reward = portfolio_return - self.penalty_weight*(transaction_costs + taxes) #- opportunity_cost
-        reward /= 1000 # Normalize reward (%)
-        
+        reward = self.reward_weight_1 * cummu_return + self.reward_weight_2 * portfolio_imme_return - self.penalty_weight*(cost_penalty) #- opportunity_cost
+        # reward /= 1000 # Normalize reward (%)
+        if np.isnan(reward) or np.isinf(reward):
+            print(f"Warning: Invalid reward detected! Setting to 0.")
+            print(f"  cummu_return: {cummu_return}, portfolio_imme_return: {portfolio_imme_return}")
+            print(f"  cost_penalty: {cost_penalty}, new_portfolio_value: {new_portfolio_value}")
+            reward = 0.0
+
         # Update portfolio value
         self.portfolio_value = new_portfolio_value
         

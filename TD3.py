@@ -95,7 +95,7 @@ class ReplayBuffer:
 # TD3 Algorithm
 class TD3:
     def __init__(self, state_dim, chaotic_feature_dim, action_dim, hidden_size, num_layers, num_stocks, max_action, env_action_space_high, env_action_space_low):
-        self.exploration_phase = 200  # Number of episodes for chaotic exploration
+        self.exploration_phase = 50  # Number of episodes for chaotic exploration
         self.actor = Actor(state_dim, chaotic_feature_dim, hidden_size, num_layers, num_stocks)
         self.actor_target = Actor(state_dim, chaotic_feature_dim, hidden_size, num_layers, num_stocks)
         self.actor_target.load_state_dict(self.actor.state_dict())
@@ -104,17 +104,17 @@ class TD3:
         self.critic_target = Critic(state_dim, chaotic_feature_dim, action_dim, hidden_size, num_layers)
         self.critic_target.load_state_dict(self.critic.state_dict())
 
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=1e-5)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=3e-5)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=1e-4)
 
-        self.replay_buffer = ReplayBuffer(size=100000)
+        self.replay_buffer = ReplayBuffer(size=50000)
 
         self.max_action = max_action
         self.env_action_space_high = env_action_space_high
         self.env_action_space_low = env_action_space_low
 
-        self.policy_noise = 0.2  # Noise standard deviation
-        self.noise_clip = 0.5  # Noise clipping
+        self.policy_noise = 0.1  # Noise standard deviation
+        self.noise_clip = 0.3  # Noise clipping
         self.policy_delay = 3  # Delayed policy updates
         self.total_it = 0
 
@@ -138,14 +138,14 @@ class TD3:
 
         # Add chaotic noise during exploration phase
         if current_episode < self.exploration_phase:
-            # chaotic = np.array([self.chaotic_noise(scale=0.01) for _ in range(actions.shape[0])])
+            chaotic = np.array([self.chaotic_noise(scale=0.01) for _ in range(actions.shape[0])])
             gaussian_noise = np.random.normal(0, 0.1, size=actions.shape)  # More variance
-            actions = np.clip(actions + gaussian_noise, self.env_action_space_low, self.env_action_space_high)
+            actions = np.clip(actions +chaotic + gaussian_noise, self.env_action_space_low, self.env_action_space_high)
 
         # Clip actions to valid range
         return np.clip(actions, self.env_action_space_low, self.env_action_space_high)
 
-    def train(self, batch_size=64,discount=0.99, tau=1e-3):
+    def train(self, batch_size=32,discount=0.95, tau=1e-3):
         if len(self.replay_buffer.buffer) < batch_size:
             return 0.0, 0.0
 
@@ -165,6 +165,9 @@ class TD3:
             # Compute target Q-values
             target_q1, target_q2 = self.critic_target(next_states, next_chaotic_features, next_actions)
             target_q = rewards + discount * (1 - dones) * torch.min(target_q1, target_q2)
+
+            #added to prevent extreme:
+            target_q = torch.clamp(target_q, -100,100)
 
             if torch.isnan(target_q).any():
                 print("Warning: NaN detected in target_q!")
