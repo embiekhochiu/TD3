@@ -107,7 +107,7 @@ class TD3:
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=3e-5)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=1e-4)
 
-        self.replay_buffer = ReplayBuffer(size=50000)
+        self.replay_buffer = ReplayBuffer(size=10000)
 
         self.max_action = max_action
         self.env_action_space_high = env_action_space_high
