@@ -1,0 +1,25 @@
+Data shape: (1509, 7, 17)
+Number of stocks: 7
+Number of features: 17
+Number of timesteps: 1509
+Date range: 2018-01-01 to 2024-01-01
+Tickers: AAPL, MA, CSCO, MSFT, AMZN, GOOG, IBM
+
+Features:
+Open
+High
+Low
+Close
+Volume
+Dividends
+Stock Splits
+EMA_50
+EMA_200
+RSI
+MACD
+BB_High
+BB_Low
+ATR
+OBV
+MFI
+ADX

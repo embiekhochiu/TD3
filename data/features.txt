@@ -1,0 +1,17 @@
+Open
+High
+Low
+Close
+Volume
+Dividends
+Stock Splits
+EMA_50
+EMA_200
+RSI
+MACD
+BB_High
+BB_Low
+ATR
+OBV
+MFI
+ADX
